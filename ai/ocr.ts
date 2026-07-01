@@ -19,7 +19,11 @@ type Florence = {
   tokenizer: any
 }
 
-const OCR_TASK = "<OCR>"
+// OCR_WITH_REGION returns text segmented by layout region, which we join with
+// newlines. Plain <OCR> concatenates everything with no separators, which glues
+// tokens together and defeats the boundary/context-anchored PII recognizers
+// (e.g. a phone number fused to the next word is not recognised → it would leak).
+const OCR_TASK = "<OCR_WITH_REGION>"
 const DEFAULT_MODEL = "onnx-community/Florence-2-base-ft"
 // fp32 is the most portable on CPU; override to "q8"/"fp16" for a lighter/faster footprint.
 const OCR_DTYPE = process.env.OCR_DTYPE || "fp32"
@@ -62,11 +66,19 @@ async function ocrOneImage(florence: Florence, base64: string, contentType: stri
 
   const generated_ids = await model.generate({ ...inputs, max_new_tokens: 1024 })
   const generated_text = tokenizer.batch_decode(generated_ids, { skip_special_tokens: false })[0]
-  const result = processor.post_process_generation(generated_text, OCR_TASK, image.size)
+  const parsed = processor.post_process_generation(generated_text, OCR_TASK, image.size)
+  const result = parsed?.[OCR_TASK]
 
-  // post_process_generation returns { "<OCR>": "..." }
-  const text = result?.[OCR_TASK]
-  return typeof text === "string" ? text : ""
+  // <OCR_WITH_REGION> returns { quad_boxes, labels }; join the per-region labels
+  // with newlines so each field is a separate, boundary-delimited token.
+  if (result && Array.isArray(result.labels)) {
+    return result.labels
+      .map((label: string) => label.replace(/<\/?s>/g, "").trim())
+      .filter(Boolean)
+      .join("\n")
+  }
+  // Fallback for plain <OCR> which returns a bare string.
+  return typeof result === "string" ? result : ""
 }
 
 /**

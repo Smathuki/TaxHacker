@@ -49,6 +49,11 @@ export async function protectText(text: string, options: ProtectOptions = {}): P
   return { guard, maskedText: result.text, placeholders: result.placeholders }
 }
 
+// A bare placeholder token (e.g. KRA_PIN_1) not wrapped in brackets. LLMs
+// sometimes drop the surrounding [] when echoing a placeholder into a field,
+// which would defeat reveal(). We re-bracket those before restoring.
+const BARE_PLACEHOLDER = /(?<![[\w])([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_\d+)(?![\]\w])/g
+
 /**
  * Recursively restore real PII values in a value returned by the LLM. Applies
  * `guard.reveal()` to every string; leaves numbers, booleans and null intact.
@@ -56,7 +61,8 @@ export async function protectText(text: string, options: ProtectOptions = {}): P
  */
 export function revealDeep<T>(guard: KenyanGuard, value: T): T {
   if (typeof value === "string") {
-    return guard.reveal(value) as unknown as T
+    const rebracketed = value.replace(BARE_PLACEHOLDER, "[$1]")
+    return guard.reveal(rebracketed) as unknown as T
   }
   if (Array.isArray(value)) {
     return value.map((item) => revealDeep(guard, item)) as unknown as T

@@ -52,10 +52,19 @@ async function requestLLMUnified(config: LLMConfig, req: LLMRequest): Promise<LL
         temperature: temperature,
       })
     } else if (config.provider === "openai_compatible") {
+      // Grammar-constrain the output to our JSON schema. llama.cpp / vLLM / LM
+      // Studio enforce this with a GBNF grammar, which is what makes small local
+      // models (the point of the privacy pipeline) reliably return valid,
+      // schema-shaped JSON instead of prose or markdown. Falls back to a plain
+      // JSON object when no schema is supplied.
+      const responseFormat = req.schema
+        ? { type: "json_schema", json_schema: { name: "transaction", schema: req.schema } }
+        : { type: "json_object" }
       model = new ChatOpenAI({
         apiKey: config.apiKey || "not-needed",
         model: config.model,
         temperature: temperature,
+        modelKwargs: { response_format: responseFormat },
         configuration: {
           baseURL: config.baseUrl?.trim(),
         },
