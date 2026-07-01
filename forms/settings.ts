@@ -18,6 +18,8 @@ export const settingsFormSchema = z.object({
   llm_providers: z.string().default('openai,google,mistral,openai_compatible'),
   prompt_analyse_new_file: z.string().optional(),
   is_welcome_message_hidden: z.string().optional(),
+  privacy_pipeline_enabled: z.string().optional(),
+  ocr_model_name: z.string().optional(),
 })
 
 export const currencyFormSchema = z.object({

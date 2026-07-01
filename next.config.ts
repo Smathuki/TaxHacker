@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true, // FIXME: bug on prod, images always empty, investigate later
   },
+  // On-device OCR + PII redaction (Florence-2 via @huggingface/transformers, rampart-ke)
+  // ship native onnxruntime + wasm assets that must not be bundled by Turbopack/webpack.
+  serverExternalPackages: [
+    "@huggingface/transformers",
+    "onnxruntime-node",
+    "@nationaldesignstudio/rampart",
+    "rampart-ke",
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: "256mb",

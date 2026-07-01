@@ -26,8 +26,8 @@ const env = envSchema.parse(process.env)
 
 const config = {
   app: {
-    title: "TaxHacker",
-    description: "Your personal AI accountant",
+    title: "TaxHacker Kenya",
+    description: "AI accounting for Kenyan SMEs, built around VAT, Turnover Tax and eTIMS",
     version: process.env.npm_package_version || "0.0.1",
     baseURL: env.BASE_URL || `http://localhost:${env.PORT || "7331"}`,
     supportEmail: "me@vas3k.com",

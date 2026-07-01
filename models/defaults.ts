@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/db"
 
-export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `You are an accountant and invoice analysis assistant. Extract following information from the given invoice: 
+export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `You are an accountant and invoice analysis assistant specializing in Kenyan tax compliance. Extract following information from the given invoice:
 
 {fields}
 
 Also try to extract "items": all separate products or items from the invoice
+
+This invoice may be a Kenyan eTIMS-compliant tax invoice. Look for the seller's KRA PIN (format like A123456789Z), an eTIMS or Control Unit (CU) invoice number (often printed near a QR code), and a tax code letter (A, B, C or E) if present.
 
 Where categories are:
 
@@ -24,7 +26,7 @@ export const DEFAULT_SETTINGS = [
     code: "default_currency",
     name: "Default Currency",
     description: "Don't change this setting if you already have multi-currency transactions. I won't recalculate them.",
-    value: "EUR",
+    value: "KES",
   },
   {
     code: "default_category",
@@ -56,54 +58,109 @@ export const DEFAULT_SETTINGS = [
     description: "",
     value: "false",
   },
+  {
+    code: "privacy_pipeline_enabled",
+    name: "On-device privacy pipeline",
+    description:
+      "Read receipts with a local OCR model and redact Kenyan PII (KRA PIN, M-Pesa, phone, ID) on-device before any text is sent to the AI. The AI never sees the image or raw personal data.",
+    value: "false",
+  },
+  {
+    code: "ocr_model_name",
+    name: "On-device OCR Model",
+    description: "Hugging Face model id used for local OCR when the privacy pipeline is enabled.",
+    value: "onnx-community/Florence-2-base-ft",
+  },
 ]
 
 export const DEFAULT_CATEGORIES = [
   {
-    code: "ads",
-    name: "Advertisement",
+    code: "sales_vatable",
+    name: "Sales - VATable (16%)",
+    color: "#1e6359",
+    llm_prompt: "sales or income invoiced at the standard 16% VAT rate",
+  },
+  {
+    code: "sales_zero_exempt",
+    name: "Sales - Zero-rated / Exempt",
+    color: "#28866a",
+    llm_prompt: "sales or income that is zero-rated or VAT-exempt",
+  },
+  {
+    code: "consulting_services",
+    name: "Consulting and Professional Services Income",
+    color: "#064e85",
+    llm_prompt: "consulting fees, professional service income, retainers",
+  },
+  { code: "rent", name: "Rent", color: "#050942", llm_prompt: "rent, lease of office or business premises" },
+  {
+    code: "salaries_paye",
+    name: "Salaries and Wages (PAYE)",
+    color: "#ce4993",
+    llm_prompt: "staff salaries, wages, PAYE payroll costs",
+  },
+  {
+    code: "nssf_shif",
+    name: "NSSF and SHIF Contributions",
+    color: "#6a0d83",
+    llm_prompt: "NSSF, SHIF, NHIF statutory contributions",
+  },
+  {
+    code: "withholding_tax",
+    name: "Withholding Tax",
     color: "#882727",
-    llm_prompt: "ads, promos, online ads, etc",
+    llm_prompt: "withholding tax (WHT) deducted or paid",
   },
   {
-    code: "swag",
-    name: "Swag and Goods",
-    color: "#882727",
-    llm_prompt: "swag, stickers, goods, etc",
-  },
-  { code: "donations", name: "Gifts and Donations", color: "#1e6359", llm_prompt: "donations, gifts, charity" },
-  { code: "tools", name: "Equipment and Tools", color: "#c69713", llm_prompt: "equipment, tools" },
-  { code: "events", name: "Events and Conferences", color: "#ff8b32", llm_prompt: "events, conferences" },
-  { code: "food", name: "Food and Drinks", color: "#d40e70", llm_prompt: "food, drinks, business meals" },
-  { code: "insurance", name: "Insurance", color: "#050942", llm_prompt: "insurance, health, life" },
-  { code: "invoice", name: "Invoice", color: "#064e85", llm_prompt: "custom invoice, bill" },
-  { code: "communication", name: "Mobile and Internet", color: "#0e7d86", llm_prompt: "mobile, internet, phone" },
-  { code: "office", name: "Office Supplies", color: "#59b0b9", llm_prompt: "office, supplies, stationery" },
-  { code: "online", name: "Online Services", color: "#8753fb", llm_prompt: "online services, saas, subscriptions" },
-  { code: "rental", name: "Rental", color: "#050942", llm_prompt: "rental, lease" },
-  {
-    code: "education",
-    name: "Education",
-    color: "#ee5d6c",
-    llm_prompt: "education, professional development, trainings",
-  },
-  { code: "salary", name: "Salary", color: "#ce4993", llm_prompt: "salary, wages, etc" },
-  { code: "fees", name: "Fees", color: "#6a0d83", llm_prompt: "fees, charges, penalties, etc" },
-  { code: "travel", name: "Travel Expenses", color: "#fb9062", llm_prompt: "travel, accommodation, etc" },
-  { code: "utility_bills", name: "Utility Bills", color: "#af7e2e", llm_prompt: "bills, electricity, water, etc" },
-  {
-    code: "transport",
-    name: "Transport",
+    code: "transport_fuel",
+    name: "Transport and Fuel",
     color: "#800000",
-    llm_prompt: "transportation costs, fuel, car rental, vignettes, etc",
+    llm_prompt: "transportation costs, fuel, matatu, car rental, parking",
   },
-  { code: "software", name: "Software", color: "#2b5a1d", llm_prompt: "software, licenses" },
-  { code: "other", name: "Other", color: "#121216", llm_prompt: "other, miscellaneous," },
+  {
+    code: "mobile_money_charges",
+    name: "Mobile Money and Bank Charges",
+    color: "#c69713",
+    llm_prompt: "M-Pesa transaction costs, bank charges, transfer fees",
+  },
+  {
+    code: "communication",
+    name: "Airtime, Data and Internet",
+    color: "#0e7d86",
+    llm_prompt: "airtime, mobile data, internet, phone bills",
+  },
+  {
+    code: "office",
+    name: "Office Supplies",
+    color: "#59b0b9",
+    llm_prompt: "office supplies, stationery, equipment",
+  },
+  {
+    code: "professional_fees",
+    name: "Professional and Legal Fees",
+    color: "#8753fb",
+    llm_prompt: "audit, legal, accounting, advisory fees",
+  },
+  {
+    code: "vat_purchases",
+    name: "VAT on Purchases",
+    color: "#af7e2e",
+    llm_prompt: "purchases with input VAT to be claimed",
+  },
+  {
+    code: "utility_bills",
+    name: "Utility Bills",
+    color: "#ee5d6c",
+    llm_prompt: "electricity (KPLC), water, utility bills",
+  },
+  { code: "insurance", name: "Insurance", color: "#2b5a1d", llm_prompt: "insurance, health, life, business cover" },
+  { code: "other", name: "Other", color: "#121216", llm_prompt: "other, miscellaneous" },
 ]
 
 export const DEFAULT_PROJECTS = [{ code: "personal", name: "Personal", llm_prompt: "personal", color: "#1e202b" }]
 
 export const DEFAULT_CURRENCIES = [
+  { code: "KES", name: "KSh" },
   { code: "USD", name: "$" },
   { code: "EUR", name: "€" },
   { code: "GBP", name: "£" },
@@ -128,7 +185,6 @@ export const DEFAULT_CURRENCIES = [
   { code: "BRL", name: "R$" },
   { code: "SAR", name: "﷼" },
   { code: "TRY", name: "₺" },
-  { code: "KES", name: "KSh" },
   { code: "KRW", name: "₩" },
   { code: "EGP", name: "£" },
   { code: "IQD", name: "ع.د" },
@@ -429,6 +485,87 @@ export const DEFAULT_FIELDS = [
     name: "VAT Amount",
     type: "number",
     llm_prompt: "total VAT in currency of the invoice",
+    isVisibleInList: false,
+    isVisibleInAnalysis: false,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "kra_pin_seller",
+    name: "Seller KRA PIN",
+    type: "string",
+    llm_prompt: "seller's or issuer's KRA PIN (Kenya Revenue Authority Personal Identification Number), format like A123456789Z",
+    isVisibleInList: true,
+    isVisibleInAnalysis: true,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "kra_pin_buyer",
+    name: "Buyer KRA PIN",
+    type: "string",
+    llm_prompt: "buyer's KRA PIN if shown on the invoice, format like A123456789Z",
+    isVisibleInList: false,
+    isVisibleInAnalysis: false,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "etims_invoice_number",
+    name: "eTIMS Invoice Number",
+    type: "string",
+    llm_prompt: "eTIMS invoice number or receipt serial number printed on the invoice",
+    isVisibleInList: true,
+    isVisibleInAnalysis: true,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "cu_invoice_number",
+    name: "CU Invoice Number",
+    type: "string",
+    llm_prompt:
+      "eTIMS Control Unit (CU) invoice number, a unique KRA-issued identifier usually printed near the QR code",
+    isVisibleInList: false,
+    isVisibleInAnalysis: true,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "tax_code",
+    name: "Tax Code",
+    type: "string",
+    llm_prompt: "KRA tax code letter for this invoice per eTIMS: A = exempt, B = 16% standard VAT, C = zero-rated, E = exempt",
+    isVisibleInList: false,
+    isVisibleInAnalysis: true,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "item_code",
+    name: "Item Code",
+    type: "string",
+    llm_prompt: "KRA item classification code for the goods or service, if shown",
+    isVisibleInList: false,
+    isVisibleInAnalysis: false,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "wht_rate",
+    name: "Withholding Tax Rate",
+    type: "number",
+    llm_prompt: "Withholding Tax (WHT) rate in percentage 0-100, if this invoice is subject to withholding tax",
+    isVisibleInList: false,
+    isVisibleInAnalysis: false,
+    isRequired: false,
+    isExtra: true,
+  },
+  {
+    code: "wht_amount",
+    name: "Withholding Tax Amount",
+    type: "number",
+    llm_prompt: "total Withholding Tax (WHT) amount in currency of the invoice",
     isVisibleInList: false,
     isVisibleInAnalysis: false,
     isRequired: false,

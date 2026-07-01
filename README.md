@@ -4,22 +4,34 @@
 
 <br>
 
-# TaxHacker: Self-Hosted AI Accounting
+# TaxHacker Kenya: Self-Hosted AI Accounting for Kenyan SMEs
 
-[![GitHub Stars](https://img.shields.io/github/stars/vas3k/TaxHacker?color=ffcb47&labelColor=black&style=flat-square)](https://github.com/vas3k/TaxHacker/stargazers)
-[![License](https://img.shields.io/badge/license-MIT-ffcb47?labelColor=black&style=flat-square)](https://github.com/vas3k/TaxHacker/blob/main/LICENSE)
-[![Support Us](https://img.shields.io/badge/-Donate-f04f88?logo=githubsponsors&logoColor=white&style=flat-square)](https://vas3k.com/donate/)
+[![License](https://img.shields.io/badge/license-MIT-ffcb47?labelColor=black&style=flat-square)](./LICENSE)
 
 </div>
 
-> [!NOTE]  
-> ☝️ I'm currently looking for a job! Particularly interested in companies in Berlin or remote positions in Germany. Here's [my CV](https://raw.githubusercontent.com/vas3k/vas3k/master/cv.pdf) and [Linkedin profile](https://www.linkedin.com/in/vas3k/). Thank you 🙏
+> [!NOTE]
+> This is a Kenya-focused fork of [vas3k/TaxHacker](https://github.com/vas3k/TaxHacker) (via [Smathuki/TaxHacker](https://github.com/Smathuki/TaxHacker)), adapted for KRA compliance: VAT, Turnover Tax and eTIMS. All credit for the original AI receipt-scanning engine goes to the upstream project; see [LICENSE](./LICENSE) for the MIT terms.
 
-TaxHacker is a self-hosted accounting app designed for freelancers, indie-hackers, and small businesses who want to save time and automate expense and income tracking using the power of modern AI.
+TaxHacker Kenya is a self-hosted accounting app for Kenyan freelancers and SMEs who want to automate expense and income tracking with AI, while staying on top of local tax compliance.
 
-Upload photos of receipts, invoices, or PDFs, and TaxHacker will automatically recognize and extract all the important data you need for accounting: product names, amounts, items, dates, merchants, taxes, and save it into a structured Excel-like database. You can even create custom fields with your own AI prompts to extract any specific information you need.
+Upload photos of receipts, invoices, or PDFs, and it will automatically recognize and extract the data you need for accounting: product names, amounts, items, dates, merchants, VAT, KRA PIN, eTIMS/Control Unit invoice numbers, and tax codes, saving everything into a structured database. You can also import M-Pesa statement CSVs directly, since a lot of Kenyan SME "receipts" are mobile money transactions rather than paper invoices.
 
-The app features automatic currency conversion (including crypto!) based on historical exchange rates from the transaction date. With built-in filtering, multi-project support, import/export capabilities, and custom categories, TaxHacker simplifies reporting and makes tax filing a bit easier.
+On top of the base TaxHacker features, this fork adds:
+
+- **Kenya-specific defaults**: KES as the base currency, and categories/fields aligned with KRA concepts (VAT-able vs. zero-rated/exempt sales, Turnover Tax, PAYE, Withholding Tax, NSSF/SHIF).
+- **eTIMS Compliance Check** (`Apps → eTIMS Compliance Check`): flags expense transactions missing a valid KRA PIN, eTIMS/Control Unit invoice number, or tax code &mdash; the kind of gap that can get an expense or input VAT claim rejected.
+- **M-Pesa Import** (`Apps → M-Pesa Import`): turns an M-Pesa statement CSV export into categorized income/expense transactions, with duplicate detection by receipt number.
+- **Kenya Tax Reports** (`Apps → Kenya Tax Reports`): VAT Return and Turnover Tax summaries for any period.
+- **On-device privacy pipeline** (Settings → AI): optionally read receipts with a local OCR model (Florence-2 via [`@huggingface/transformers`](https://huggingface.co/docs/transformers.js)) and redact Kenyan PII (KRA PIN, M-Pesa, phone, national ID) on your own server using [rampart-ke](https://github.com/Smathuki/rampart-ke) **before** any text reaches the AI — so the AI never sees the image or raw personal data. Point the text step at a local model (Ollama) for a fully zero-cloud setup. See [On-device Privacy](/docs/privacy).
+- **Data Protection** (`Apps → Data Protection`): a PII-free, ODPC-style Data Protection Act 2019 report of how much was redacted on-device.
+- A **KRA VAT Return** export column preset, and a [Kenya Tax Guide](/docs/kenya-tax) explaining VAT vs. Turnover Tax and eTIMS in plain language.
+
+The app still features automatic currency conversion (including crypto), built-in filtering, multi-project support, import/export capabilities, and custom categories/fields from the original TaxHacker.
+
+### Attribution
+
+PII redaction is powered by [rampart-ke](https://github.com/Smathuki/rampart-ke), a Kenya-localized layer over [Rampart](https://huggingface.co/nationaldesignstudio/rampart) by National Design Studio, used under CC BY 4.0.
 
 > 🎥 [Watch demo video](https://taxhacker.app/landing/video.mp4)
 

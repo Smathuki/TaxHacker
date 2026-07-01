@@ -59,3 +59,12 @@ pgdata
 
 # Local git worktrees
 .worktrees/
+
+# On-device OCR model weights (downloaded at runtime)
+.model-cache/
+
+# Local Claude Code settings
+.claude/
+
+# vendored package dev deps (runtime deps are hoisted to root)
+vendor/**/node_modules/

@@ -37,6 +37,7 @@ export default function LLMSettingsForm({
 }) {
   const [saveState, saveAction, pending] = useActionState(saveSettingsAction, null)
   const [providerOrder, setProviderOrder] = useState<string[]>(getInitialProviderOrder(settings))
+  const [privacyEnabled, setPrivacyEnabled] = useState(settings.privacy_pipeline_enabled === "true")
 
   // Controlled values for each provider
   const [providerValues, setProviderValues] = useState(() => {
@@ -78,6 +79,39 @@ export default function LLMSettingsForm({
         )}
 
         {isSelfHosted && <input type="hidden" name="llm_providers" value={providerOrder.join(",")} />}
+
+        {isSelfHosted && (
+          <div className="space-y-3 bg-muted rounded-lg p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={privacyEnabled}
+                onChange={(e) => setPrivacyEnabled(e.target.checked)}
+              />
+              <span className="flex flex-col">
+                <span className="font-semibold">🔒 On-device privacy pipeline</span>
+                <span className="text-sm text-muted-foreground">
+                  Read receipts with a local OCR model and redact Kenyan PII (KRA PIN, M-Pesa, phone, national ID) on
+                  this server before any text is sent to the AI. The AI never sees the image or raw personal data —
+                  strongest for Data Protection Act 2019 compliance. Trade-off: local OCR is less accurate than cloud
+                  vision, and the model (~hundreds of MB) downloads once on first use.
+                </span>
+              </span>
+            </label>
+            <input type="hidden" name="privacy_pipeline_enabled" value={privacyEnabled ? "true" : "false"} />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">On-device OCR model (Hugging Face id)</label>
+              <input
+                type="text"
+                name="ocr_model_name"
+                defaultValue={settings.ocr_model_name || "onnx-community/Florence-2-base-ft"}
+                className="w-full border rounded px-2 py-1"
+                placeholder="onnx-community/Florence-2-base-ft"
+              />
+            </div>
+          </div>
+        )}
 
         <FormTextarea
           title="Prompt for File Analysis Form"

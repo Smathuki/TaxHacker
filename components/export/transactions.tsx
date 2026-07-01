@@ -23,6 +23,22 @@ import { useState } from "react"
 
 const deselectedFields = ["files", "text"]
 
+const KRA_VAT_RETURN_FIELDS = [
+  "issuedAt",
+  "name",
+  "merchant",
+  "type",
+  "total",
+  "currencyCode",
+  "categoryCode",
+  "kra_pin_seller",
+  "etims_invoice_number",
+  "cu_invoice_number",
+  "tax_code",
+  "vat_rate",
+  "vat",
+]
+
 export function ExportTransactionsDialog({
   fields,
   categories,
@@ -137,7 +153,19 @@ export function ExportTransactionsDialog({
 
           <Separator />
 
-          <div className="text-lg font-bold">Fields to be included in CSV</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-lg font-bold">Fields to be included in CSV</div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setExportFields(KRA_VAT_RETURN_FIELDS.filter((code) => fields.some((field) => field.code === code)))
+              }
+            >
+              Use KRA VAT Return columns
+            </Button>
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             {fields.map((field) => (

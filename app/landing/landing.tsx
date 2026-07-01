@@ -55,7 +55,7 @@ export default function LandingPage() {
               Let AI finally care about your taxes, scan your receipts and analyze your expenses
             </h1>
             <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto font-medium">
-              Self-hosted accounting app crafted for freelancers, indie-hackers and small businesses
+              Self-hosted accounting app for Kenyan SMEs &mdash; built around VAT, Turnover Tax and eTIMS compliance
             </p>
             <div className="flex gap-4 justify-center text-sm md:text-lg">
               <Link
@@ -559,6 +559,18 @@ export default function LandingPage() {
               </Link>
               <Link href="/docs/ai" className="text-sm text-gray-600 hover:text-pink-600 font-medium transition-colors">
                 AI Use Disclosure
+              </Link>
+              <Link
+                href="/docs/kenya-tax"
+                className="text-sm text-gray-600 hover:text-pink-600 font-medium transition-colors"
+              >
+                Kenya Tax Guide
+              </Link>
+              <Link
+                href="/docs/privacy"
+                className="text-sm text-gray-600 hover:text-pink-600 font-medium transition-colors"
+              >
+                On-device Privacy
               </Link>
               <Link
                 href="/docs/cookie"
