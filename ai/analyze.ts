@@ -14,6 +14,22 @@ export type AnalysisResult = {
   tokensUsed: number
 }
 
+/**
+ * Return a copy of a fieldsToJsonSchema() schema without one property, removed
+ * from `properties`/`required` at the top level and inside `items`.
+ */
+function pruneSchemaProperty(schema: Record<string, unknown>, key: string): Record<string, unknown> {
+  const clone = structuredClone(schema) as any
+  for (const level of [clone, clone?.properties?.items?.items]) {
+    if (!level?.properties) continue
+    delete level.properties[key]
+    if (Array.isArray(level.required)) {
+      level.required = level.required.filter((name: string) => name !== key)
+    }
+  }
+  return clone
+}
+
 export async function analyzeTransaction(
   prompt: string,
   schema: Record<string, unknown>,
@@ -90,18 +106,23 @@ async function analyzeTransactionPrivate(
   // 2. On-device PII redaction — only placeholdered text will leave the device.
   const { guard, maskedText, placeholders } = await protectText(rawText)
 
-  // 3. Text-only LLM extraction (no image, no raw PII in the request).
+  // 3. Text-only LLM extraction (no image, no raw PII in the request). We
+  // already hold the full OCR text locally, so don't ask the model to re-emit
+  // the "text" field — grammar-constrained small local models tend to loop on
+  // that open-ended string, generating for minutes.
   const response = await requestLLM(llmSettings, {
     prompt: `${prompt}\n\n--- Document OCR text (personal data already redacted) ---\n${maskedText}`,
-    schema,
+    schema: pruneSchemaProperty(schema, "text"),
     attachments: [],
   })
   if (response.error) {
     throw new Error(response.error)
   }
 
-  // 4. Restore the real PII values locally, in the structured output.
+  // 4. Restore the real PII values locally, in the structured output, and fill
+  // the "text" field from the on-device OCR instead of the model.
   const output = revealDeep(guard, response.output)
+  output.text = rawText
 
   // 5. PII-free audit for the ODPC compliance report.
   await recordRedactions(userId, placeholders)

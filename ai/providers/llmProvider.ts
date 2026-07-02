@@ -64,6 +64,11 @@ async function requestLLMUnified(config: LLMConfig, req: LLMRequest): Promise<LL
         apiKey: config.apiKey || "not-needed",
         model: config.model,
         temperature: temperature,
+        // Cap generation and total request time: grammar-constrained small
+        // models can loop on open-ended string fields, and an unbounded
+        // generation on CPU pins the machine until the HTTP client dies.
+        maxTokens: 2048,
+        timeout: 180_000,
         modelKwargs: { response_format: responseFormat },
         configuration: {
           baseURL: config.baseUrl?.trim(),
